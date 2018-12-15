@@ -87,21 +87,58 @@ function ast_to_jsStrArr(ast, resArr) {
 	return resArr;
 }
 
- /**
-  * @TODO - refactor this hsit
-  * 
-  * @param {*} ast object or array (of ast objects) to process
-  * @param {*} compileContext object for the compiler state
-  * @param {*} result to populate and fill up
-  */
-function crazy_ast_shit(ast, compileContext, result) {
-	if (compileContext.isPkg == "undefined") {
-	  compileContext.isPkg = false;
+ 
+function crazy_stmtTolabel(ast, stmt, CContext) {
+	const label = stmt.join('')
+		.replace(new RegExp(' ', 'g'), '_')
+		.replace(new RegExp(';', 'g'), '')
+		.replace(new RegExp('\n', 'g'), '')
+		.replace(new RegExp('=', 'g'), 'equals')
+		.replace(new RegExp('\\+', 'g'), 'plus')
+		.replace(new RegExp('-', 'g'), 'minus')
+		.replace(new RegExp('\\*', 'g'), 'times')
+		.replace(new RegExp('/', 'g'), 'divide')
+		.replace(new RegExp('%', 'g'), 'percent')
+		.replace(new RegExp(',', 'g'), 'comma')
+		.replace(new RegExp('\\.', 'g'), 'dot')
+		.replace(new RegExp('\\(', 'g'), 'openbracket')
+		.replace(new RegExp('\\)', 'g'), 'closebracket');
+	let pkgOutput = [];
+	let stmtContext = Object.assign({}, CContext, { isPkg:true });
+	crazy_ast_shit(ast, stmtContext, pkgOutput);
+	pkgOutput = [
+		"var get = require('get');\n",
+		"\n",
+		"module.exports = function(context) {\n",
+		pkgOutput.join(''),
+		"}\n",
+	];
+
+	console.log("PKG: " + pkgOutput.join(''));
+	CContext.modules[label] = pkgOutput;
+	return label
+}
+
+
+/**
+ * @TODO - refactor this hsit
+ * 
+ * @param {*} ast object or array (of ast objects) to process
+ * @param {*} CContext object for the compiler state
+ * @param {*} result to populate and fill up
+ */
+function crazy_ast_shit(ast, CContext, result) {
+	if (CContext.isPkg == "undefined") {
+	  CContext.isPkg = false;
 	}
 	
+	if(!Array.isArray(result)) {
+		throw "invalid result array";
+	}
+
 	if (Array.isArray(ast)) {
 	  for (let i=0; i<ast.length; i++) {
-		 compile(ast[i], result, compileContext.isPkg);
+		 crazy_ast_shit(ast[i], CContext, result);
 	  }
 	  return result;
 	} 
@@ -109,19 +146,19 @@ function crazy_ast_shit(ast, compileContext, result) {
 	if (ast.type == "Literal") {
 		result.push(ast.raw);
 	 } else if (ast.type == "Identifier") {
-		if (compileContext.isPkg) {
+		if (CContext.isPkg) {
 		  result.push("get(context, '"+ast.name+"')."+ast.name+"");
 		} else {
 		  result.push(ast.name);
 		}
 	 } else if (ast.type == "ExpressionStatement") {
 		if (ast.expression.type == "CallExpression") {
-		  const funcName = compileContext.oriJs.slice(ast.expression.callee.start, ast.expression.callee.end);
+		  const funcName = CContext.oriJs.slice(ast.expression.callee.start, ast.expression.callee.end);
 		  
 		  if (funcName == 'console.log') {
 			 result.push(funcName + '(');
 			 for (let i=0; i<ast.expression.arguments.length; i++) {
-				compile(ast.expression.arguments[i], result, true);
+				crazy_ast_shit(ast.expression.arguments[i], result, true);
 				if (i != ast.expression.arguments.length - 1) {
 				  result.push(',');
 				}
@@ -132,28 +169,28 @@ function crazy_ast_shit(ast, compileContext, result) {
 		}
 		
 		const stmt = []
-		compile(ast.expression, stmt, compileContext.isPkg);
+		crazy_ast_shit(ast.expression, CContext, stmt);
 		stmt.push(';\n');
 		
-		if (compileContext.isPkg) {
+		if (CContext.isPkg) {
 		  result.push(stmt.join(''));
 		} else {
-		  label = stmtTolabel(ast, stmt);
+		  label = crazy_stmtTolabel(ast, stmt, CContext);
 		  result.push(label + '(context);\n');
 		}
 	 } else if (ast.type == "BinaryExpression") {
-		compile(ast.left, result, compileContext.isPkg);
+		crazy_ast_shit(ast.left, CContext, result);
 		result.push(' ');
 		result.push(ast.operator);
 		result.push(' ');
-		compile(ast.right, result, compileContext.isPkg);
+		crazy_ast_shit(ast.right, CContext, result);
 	 } else if (ast.type == "VariableDeclaration") {
 		for (let i=0; i<ast.declarations.length; i++) {
-		  if (compileContext.isPkg) {
+		  if (CContext.isPkg) {
 			 const stmt = []
 			 result.push("get(context, '"+ast.declarations[i].id.name+"')."+ast.declarations[i].id.name+"");
 			 stmt.push(' = ');
-			 compile(ast.declarations[i].init, stmt, compileContext.isPkg);
+			 crazy_ast_shit(ast.declarations[i].init, CContext, stmt);
 			 stmt.push(';\n');
 			 result.push(stmt.join(''));
 		  } else {
@@ -162,19 +199,19 @@ function crazy_ast_shit(ast, compileContext, result) {
 			 stmt.push(' ');
 			 stmt.push(ast.declarations[i].id.name)
 			 stmt.push(' = ');
-			 compile(ast.declarations[i].init, stmt, compileContext.isPkg);
+			 crazy_ast_shit(ast.declarations[i].init, CContext, stmt);
 			 stmt.push(';\n');
-			 label = stmtTolabel(ast, stmt);
+			 label = crazy_stmtTolabel(ast, stmt, CContext);
 			 console.log('Found:' + label);
 			 result.push(label + '(context);\n')
 		  }
 		}
 	 } else if (ast.type == "AssignmentExpression") {
-		compile(ast.left, result, compileContext.isPkg);
+		crazy_ast_shit(ast.left, CContext, result);
 		result.push(' ');
 		result.push(ast.operator);
 		result.push(' ');
-		compile(ast.right, result, compileContext.isPkg);
+		crazy_ast_shit(ast.right, CContext, result);
 	 } else if (ast.type == "CallExpression") {
 		
 		// throw "NotImplemented " + ast.type;
