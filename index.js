@@ -107,6 +107,24 @@ function compile(ast, result, pkg) {
   }
 }
 
+function compile_fuzz(ast, result, pkg) {
+  // Array iterate
+  if (Array.isArray(ast)) {
+    for (let i=0; i<ast.length; i++) {
+      compile_fuzz(ast[i], result, pkg);
+    }
+    return result;
+  }
+
+  // NEW STUFF
+  // if (ast.type == "Literal") {
+
+  // }
+
+  // old stuff
+  return compile(ast, result, pkg);
+}
+
 let result = [];
 const modules = {};
 

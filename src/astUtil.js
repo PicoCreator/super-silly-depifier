@@ -36,7 +36,7 @@ function jsStr_to_ast(jsStr) {
  * 
  * @return resArr converted from the ast
  */
-function ast_to_jsStrArr(ast, resArr) {
+function ast_to_jsStrArr_raw(ast, resArr) {
 	// Optional resArr setup
 	if( resArr == null ) {
 		resArr = [];
