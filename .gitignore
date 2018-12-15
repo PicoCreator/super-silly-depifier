@@ -1,5 +1,6 @@
 # Preventing nodejs dependencies from being committed
 /node_modules
+/input/*/node_modules
 
 # Preventing mocha-tmp and output folder from being committed
 /mocha-tmp

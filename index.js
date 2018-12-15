@@ -3,12 +3,9 @@ const path = require('path');
 
 const Parser = require('acorn');
 
-filename = process.argv[2];
-basename = path.basename(filename);
-
-
-
-js = fs.readFileSync(filename, 'utf-8');
+input_filepath = process.argv[2];
+basename = path.basename(input_filepath);
+js = fs.readFileSync(input_filepath, 'utf-8');
 ast = Parser.parse(js);
 
 console.log(ast);
@@ -392,14 +389,17 @@ for (i in modules) {
 
 
 // UPLOADING SHIT
-if( process.argv[3] == "true" ) {
+if( process.argv[3] != null ) {
+  let namespace = process.argv[3];
+
   console.log("==============================================");
   console.log("= UPLOADING MODE ENABLED - time to push this!");
+  console.log("= using namespace : "+namespace);
   console.log("= you got 0 seconds to terminate this option");
   console.log("==============================================");
 
   const npmUpload = require("./src/npmUpload.js");
   setTimeout(function() {
-    npmUpload.upload_nodeModules("output/node_modules/");
+    npmUpload.upload_outputFolder("output/", namespace, input_filepath);
   }, 0);
 }
