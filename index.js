@@ -198,6 +198,8 @@ function compile(ast, result, pkg) {
       result.push("return retval;\n");
     } else if (ast.type == "ContinueStatement") {
       result.push("continue;\n");
+    } else if (ast.type == "BreakStatement") {
+      result.push("break;\n");
     } else if (ast.type == "AssignmentExpression") {
       /*try {
         if (ast.right == "CallExpression" && ast.right.callee.name == 'require') {
