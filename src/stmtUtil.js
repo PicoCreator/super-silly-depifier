@@ -20,16 +20,16 @@ const md5 = require("md5");
 function str_to_label(stmt) {
 	const trim_stmt = stmt.trim();
 	const label = stmt.join('')
-	  .replace(new RegExp(' ', 'g'), '_')
-	  .replace(new RegExp(';', 'g'), '')
-	  .replace(new RegExp('\n', 'g'), '')
-	  .replace(new RegExp('=', 'g'), 'equals')
-	  .replace(new RegExp('\\+', 'g'), 'plus')
-	  .replace(new RegExp('-', 'g'), 'minus')
-	  .replace(new RegExp('\\*', 'g'), 'times')
-	  .replace(new RegExp('/', 'g'), 'divide')
-	  .replace(new RegExp('%', 'g'), 'percent')
-	  .replace(new RegExp(',', 'g'), 'comma');
+		.replace(new RegExp(' ', 'g'), '_')
+		.replace(new RegExp(';', 'g'), '')
+		.replace(new RegExp('\n', 'g'), '')
+		.replace(new RegExp('=', 'g'), 'equals')
+		.replace(new RegExp('\\+', 'g'), 'plus')
+		.replace(new RegExp('-', 'g'), 'minus')
+		.replace(new RegExp('\\*', 'g'), 'times')
+		.replace(new RegExp('/', 'g'), 'divide')
+		.replace(new RegExp('%', 'g'), 'percent')
+		.replace(new RegExp(',', 'g'), 'comma');
 	return label + md5(trim_stmt);
 }
 

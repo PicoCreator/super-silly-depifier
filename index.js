@@ -39,72 +39,10 @@ function stmtTolabel(ast, stmt) {
 }
 
 function compile(ast, result, pkg) {
-  if (pkg == "undefined") {
-    pkg = false;
-  }
-  
-  if (Array.isArray(ast)) {
-    for (let i=0; i<ast.length; i++) {
-      compile(ast[i], result, pkg);
-    }
-  } else {
-    if (ast.type == "Literal") {
-      result.push(ast.raw);
-    } else if (ast.type == "Identifier") {
-      if (pkg) {
-        result.push("get(context, '"+ast.name+"')."+ast.name+"");
-      } else {
-        result.push(ast.name);
-      }
-    } else if (ast.type == "ExpressionStatement") {
-      const stmt = []
-      compile(ast.expression, stmt, pkg);
-      stmt.push(';\n');
-      
-      if (pkg) {
-        result.push(stmt.join(''));
-      } else {
-        label = stmtTolabel(ast, stmt);
-        result.push(label + '(context);\n');
-      }
-    } else if (ast.type == "BinaryExpression") {
-      compile(ast.left, result, pkg);
-      result.push(' ');
-      result.push(ast.operator);
-      result.push(' ');
-      compile(ast.right, result, pkg);
-    } else if (ast.type == "VariableDeclaration") {
-      for (let i=0; i<ast.declarations.length; i++) {
-        if (pkg) {
-          const stmt = []
-          result.push("get(context, '"+ast.declarations[i].id.name+"')."+ast.declarations[i].id.name+"");
-          stmt.push(' = ');
-          compile(ast.declarations[i].init, stmt, pkg);
-          stmt.push(';\n');
-          result.push(stmt.join(''));
-        } else {
-          const stmt = []
-          stmt.push(ast.kind);
-          stmt.push(' ');
-          stmt.push(ast.declarations[i].id.name)
-          stmt.push(' = ');
-          compile(ast.declarations[i].init, stmt, pkg);
-          stmt.push(';\n');
-          label = stmtTolabel(ast, stmt);
-          console.log('Found:' + label);
-          result.push(label + '(context);\n')
-        }
-      }
-    } else if (ast.type == "AssignmentExpression") {
-      compile(ast.left, result, pkg);
-      result.push(' ');
-      result.push(ast.operator);
-      result.push(' ');
-      compile(ast.right, result, pkg);
-    } else {
-      throw "NotImplemented " + ast.type;
-    }
-  }
+  astUtil.crazy_ast_shit(ast, {
+    isPkg : pkg,
+    oriJs : js
+  }, result);
 }
 
 function compile_fuzz(ast, result, pkg) {
@@ -117,9 +55,9 @@ function compile_fuzz(ast, result, pkg) {
   }
 
   // NEW STUFF
-  // if (ast.type == "Literal") {
+  if (ast.type == "Literal") {
 
-  // }
+  }
 
   // old stuff
   return compile(ast, result, pkg);

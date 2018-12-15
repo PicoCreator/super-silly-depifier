@@ -36,7 +36,7 @@ function jsStr_to_ast(jsStr) {
  * 
  * @return resArr converted from the ast
  */
-function ast_to_jsStrArr_raw(ast, resArr) {
+function ast_to_jsStrArr(ast, resArr) {
 	// Optional resArr setup
 	if( resArr == null ) {
 		resArr = [];
@@ -50,7 +50,7 @@ function ast_to_jsStrArr_raw(ast, resArr) {
 		return resArr;
 	}
 
-	// Does the various conversion
+	// Does the various conversion types
 	if (ast.type == "Literal") {
 		resArr.push(ast.raw);
 	} else if (ast.type == "Identifier") {
@@ -87,6 +87,83 @@ function ast_to_jsStrArr_raw(ast, resArr) {
 	return resArr;
 }
 
+ /**
+  * @TODO - refactor this hsit
+  * 
+  * @param {*} ast object or array (of ast objects) to process
+  * @param {*} compileContext object for the compiler state
+  * @param {*} result to populate and fill up
+  */
+function crazy_ast_shit(ast, compileContext, result) {
+	if (pkg == "undefined") {
+	  pkg = false;
+	}
+	
+	if (Array.isArray(ast)) {
+	  for (let i=0; i<ast.length; i++) {
+		 compile(ast[i], result, pkg);
+	  }
+	  return result;
+	} 
+
+	if (ast.type == "Literal") {
+		result.push(ast.raw);
+	} else if (ast.type == "Identifier") {
+		if (pkg) {
+		result.push("get(context, '"+ast.name+"')."+ast.name+"");
+		} else {
+		result.push(ast.name);
+		}
+	} else if (ast.type == "ExpressionStatement") {
+		const stmt = []
+		compile(ast.expression, stmt, pkg);
+		stmt.push(';\n');
+		
+		if (pkg) {
+		result.push(stmt.join(''));
+		} else {
+		label = stmtTolabel(ast, stmt);
+		result.push(label + '(context);\n');
+		}
+	} else if (ast.type == "BinaryExpression") {
+		compile(ast.left, result, pkg);
+		result.push(' ');
+		result.push(ast.operator);
+		result.push(' ');
+		compile(ast.right, result, pkg);
+	} else if (ast.type == "VariableDeclaration") {
+		for (let i=0; i<ast.declarations.length; i++) {
+		if (pkg) {
+			const stmt = []
+			result.push("get(context, '"+ast.declarations[i].id.name+"')."+ast.declarations[i].id.name+"");
+			stmt.push(' = ');
+			compile(ast.declarations[i].init, stmt, pkg);
+			stmt.push(';\n');
+			result.push(stmt.join(''));
+		} else {
+			const stmt = []
+			stmt.push(ast.kind);
+			stmt.push(' ');
+			stmt.push(ast.declarations[i].id.name)
+			stmt.push(' = ');
+			compile(ast.declarations[i].init, stmt, pkg);
+			stmt.push(';\n');
+			label = stmtTolabel(ast, stmt);
+			console.log('Found:' + label);
+			result.push(label + '(context);\n')
+		}
+		}
+	} else if (ast.type == "AssignmentExpression") {
+		compile(ast.left, result, pkg);
+		result.push(' ');
+		result.push(ast.operator);
+		result.push(' ');
+		compile(ast.right, result, pkg);
+	} else {
+		throw "NotImplemented " + ast.type;
+	}
+ }
+
 //------------------------------------------
 //
 // Exported "static class"
@@ -94,5 +171,6 @@ function ast_to_jsStrArr_raw(ast, resArr) {
 //------------------------------------------
 module.exports = {
 	ast_to_jsStrArr: ast_to_jsStrArr,
-	jsStr_to_ast: jsStr_to_ast
+	jsStr_to_ast: jsStr_to_ast,
+	crazy_ast_shit: crazy_ast_shit
 };
