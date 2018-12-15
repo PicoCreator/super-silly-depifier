@@ -15,20 +15,20 @@ function stmtTolabel(ast, stmt) {
   label = label.replace(new RegExp(' ', 'g'), '_');
   label = label.replace(new RegExp(';', 'g'), '');
   label = label.replace(new RegExp('\n', 'g'), '');
-  label = label.replace(new RegExp('=', 'g'), 'eq');
+  label = label.replace(new RegExp('=', 'g'), 'equals');
   label = label.replace(new RegExp('\\+', 'g'), 'plus');
-  label = label.replace(new RegExp('-', 'g'), 'min');
+  label = label.replace(new RegExp('-', 'g'), 'minus');
   label = label.replace(new RegExp('\\*', 'g'), 'times');
-  label = label.replace(new RegExp('/', 'g'), 'div');
-  label = label.replace(new RegExp('%', 'g'), 'per');
+  label = label.replace(new RegExp('/', 'g'), 'divide');
+  label = label.replace(new RegExp('%', 'g'), 'percent');
   label = label.replace(new RegExp(',', 'g'), 'comma');
   label = label.replace(new RegExp('\\.', 'g'), 'dot');
-  label = label.replace(new RegExp('\\(', 'g'), 'opnbr');
-  label = label.replace(new RegExp('\\)', 'g'), 'clsbr');
-  label = label.replace(new RegExp('\\[', 'g'), 'opnsqbr');
-  label = label.replace(new RegExp('\\]', 'g'), 'clssqbr');
-  label = label.replace(new RegExp('>', 'g'), 'gt');
-  label = label.replace(new RegExp('<', 'g'), 'lt');
+  label = label.replace(new RegExp('\\(', 'g'), 'openbracket');
+  label = label.replace(new RegExp('\\)', 'g'), 'closebracket');
+  label = label.replace(new RegExp('\\[', 'g'), 'opensqbracket');
+  label = label.replace(new RegExp('\\]', 'g'), 'closesqbracket');
+  label = label.replace(new RegExp('>', 'g'), 'greater');
+  label = label.replace(new RegExp('<', 'g'), 'lesser');
   label = label.replace(new RegExp("'", 'g'), '_');
   label = label.replace(new RegExp('"', 'g'), '_');
   label = label.replace( /[^a-zA-Z0-9_]/g , "");
@@ -132,9 +132,7 @@ function compile(ast, result, pkg) {
           console.log('LOOK HERE: "' + ast.declarations[i].init.callee.name + '"');
           if (ast.declarations[i].init.callee.name == 'require') {
             console.log('FOUND REQUIRE: ' + js.slice(ast.declarations[i].start, ast.declarations[i].end));
-            result.push("get(context, '"+ast.declarations[i].id.name+"')."+ast.declarations[i].id.name+"");
-            result.push(' = ');
-            result.push(js.slice(ast.declarations[i].init.start, ast.declarations[i].init.end))
+            result.push(js.slice(ast.declarations[i].start, ast.declarations[i].end))
             result.push(';\n');
             return;
           }
@@ -263,7 +261,7 @@ function compile(ast, result, pkg) {
       result.push('for (');
       result.push(ast.left.name);
       result.push(' in ');
-      result.push("get(context, '"+ast.right.name+"')."+ast.right.name);
+      compile(ast.right, result, pkg);
       result.push(')');
       result.push('{\n');
       result.push("get(context, '"+ast.left.name+"')."+ast.left.name+" = "+ast.left.name+";\n");
@@ -290,22 +288,16 @@ function compile(ast, result, pkg) {
           return
         } else {
           result.push('process.')
-          result.push(ast.property.name)
-          return;
-        }
-      } else {
-        if (ast.computed) {
-          compile(ast.object, result, pkg);
-          result.push('[')
+          
           compile(ast.property, result, pkg);
-          result.push(']')
-          return;
-        } else {
-          compile(ast.object, result, pkg);
-          result.push('.')
-          result.push(ast.property.name)
-          return;
         }
+        
+      } else {
+        compile(ast.object, result, pkg);
+        result.push('[')
+        compile(ast.property, result, pkg);
+        result.push(']')
+        return
       }
     } else if (ast.type == "NewExpression") {
       result.push('new ')
