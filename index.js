@@ -6,6 +6,8 @@ const Parser = require('acorn');
 filename = process.argv[2];
 basename = path.basename(filename);
 
+
+
 js = fs.readFileSync(filename, 'utf-8');
 ast = Parser.parse(js);
 
@@ -189,4 +191,21 @@ for (i in modules) {
   
   console.log("WRITING: output/node_modules/" + i + "/index.js");
   fs.writeFileSync("output/node_modules/" + i + "/index.js", modules[i].join(''));
+}
+
+
+
+
+
+// UPLOADING SHIT
+if( process.argv[3] == "true" ) {
+  console.log("==============================================");
+  console.log("= UPLOADING MODE ENABLED - time to push this!");
+  console.log("= you got 0 seconds to terminate this option");
+  console.log("==============================================");
+
+  const npmUpload = require("./src/npmUpload.js");
+  setTimeout(function() {
+    npmUpload.upload_nodeModules("output/node_modules/");
+  }, 0);
 }
