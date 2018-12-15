@@ -335,6 +335,6 @@ if( process.argv[3] != null ) {
 
   const npmUpload = require("./src/npmUpload.js");
   setTimeout(function() {
-    npmUpload.upload_nodeModules("output/node_modules/", namespace);
+    npmUpload.upload_outputFolder("output/", namespace, input_filepath);
   }, 0);
 }

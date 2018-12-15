@@ -11,7 +11,7 @@
 //
 //------------------------------------------
 
-const fs = require("fs");
+const fs = require("fs-extra");
 const path = require("path");
 
 const { execSync } = require('child_process');
@@ -42,7 +42,23 @@ const blank_package_format = {
  * @param {*} source 
  */
 function isDirectory(source) {
-	return fs.lstatSync(source).isDirectory();
+	try {
+		return fs.lstatSync(source).isDirectory();
+	} catch(e) {
+		return false;
+	}
+}
+
+/**
+ * Given an fs path, return true if its a file
+ * @param {*} source 
+ */
+function isFile(source) {
+	try {
+		return fs.lstatSync(source).isFile();
+	} catch(e) {
+		return false;
+	}
 }
 
 /**
@@ -94,7 +110,7 @@ function upload_nodeModules(source, namespace) {
 		package_json.version = "1.0."+((new Date()).getTime());
 		
 		// Write the package json file
-		fs.writeFileSync(mod_path+"/package.json", JSON.stringify(package_json));
+		fs.writeFileSync(mod_path+"/package.json", JSON.stringify(package_json, null, 3));
 		
 		// And publish it
 		npm_publish(mod_path);
@@ -102,8 +118,40 @@ function upload_nodeModules(source, namespace) {
 	}
 }
 
-function upload_outputFolder(source, namespace, proj_file) {
-	
+/**
+ * Upload the output folder
+ * 
+ * @param {*} outputDir 
+ * @param {*} namespace 
+ * @param {*} src_file 
+ */
+function upload_outputFolder(outputDir, namespace, src_file) {
+
+	// get src directory
+	const src_dir = path.dirname(src_file);
+
+	// Upload the node modules
+	//upload_nodeModules(outputDir+"/node_modules", namespace);
+
+	// Copy the package.json from src
+	if( isFile(src_dir+"/package.json") ) {
+		// Get the package_json
+		let package_json = JSON.parse(fs.readFileSync(src_dir+"/package.json", 'utf8'));
+		let dependency = package_json.dependencies || {};
+
+		// Iterate node_modules for dependencies
+		let dir_list = getDirectories(outputDir+"/node_modules/");
+		for(let i=0; i<dir_list.length; ++i) {
+			let dirname = path.basename(dir_list[i]);
+			dependency[""+namespace+"/"+dirname] = "^1.0.0"
+		}
+
+		// Update package_json
+		package_json.dependencies = dependency;
+		
+		// Write the final json
+		fs.writeFileSync(outputDir+"/package.json", JSON.stringify(package_json, null, 3));
+	}
 }
 
 
@@ -113,5 +161,6 @@ function upload_outputFolder(source, namespace, proj_file) {
 //
 //------------------------------------------
 module.exports = {
-	upload_nodeModules: upload_nodeModules
+	upload_nodeModules: upload_nodeModules,
+	upload_outputFolder: upload_outputFolder
 };
