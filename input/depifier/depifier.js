@@ -33,8 +33,8 @@ function stmtTolabel(ast, stmt) {
   label = label.replace(new RegExp('"', 'g'), '_');
   label = label.replace( /[^a-zA-Z0-9_]/g , "");
   label = label.replace(/\s/g,'');
-  if (label.length > 40) {
-    label = label.slice(0, 40);
+  if (label.length > 30) {
+    label = label.slice(0, 30);
   }
   let pkgOutput = [];
   compile(ast, pkgOutput, true);
