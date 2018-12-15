@@ -1,5 +1,8 @@
-# So we dun commit dependency
+# Preventing nodejs dependencies from being committed
 /node_modules
+
+# Preventing mocha-tmp folder from being committed
+/mocha-tmp
 
 # hidden files stuff
 .*
