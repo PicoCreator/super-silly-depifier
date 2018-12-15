@@ -19,5 +19,8 @@
   "dependencies": {
     "acorn": "^6.0.4",
     "commander": "^2.19.0"
+  },
+  "devDependencies": {
+    "mocha": "^5.2.0"
   }
 }
