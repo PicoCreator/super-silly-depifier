@@ -14,7 +14,6 @@ function strArr_to_codelineObjectArray(strArr) {
 	// Final return array
 	let ret = [];
 
-
 	// Iterate every line one by one
 	for(let i=0; i<strArr.length; ++i) {
 

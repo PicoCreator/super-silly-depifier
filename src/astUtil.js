@@ -19,7 +19,7 @@ const Parser = require('acorn');
  * @return ast object / ast array
  */
 function jsStr_to_ast(jsStr) {
-	return Parser.parse(jsStr);
+	return Parser.parse(jsStr).body;
 }
 
 /**
