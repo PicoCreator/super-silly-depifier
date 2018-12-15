@@ -18,6 +18,8 @@ function compile(ast, result) {
       result.push(ast.raw);
     } else if (ast.type == "Identifier") {
       result.push(ast.name);
+    } else if (ast.type == "ExpressionStatement") {
+      compile(ast.expression, result);
     } else if (ast.type == "BinaryExpression") {
       compile(ast.left, result);
       result.push(' ');
@@ -25,7 +27,6 @@ function compile(ast, result) {
       result.push(' ');
       compile(ast.right, result);
     } else if (ast.type == "VariableDeclaration") {
-      console.dir(ast);
       for (let i=0; i<ast.declarations.length; i++) {
         result.push(ast.kind);
         result.push(' ');
@@ -34,8 +35,13 @@ function compile(ast, result) {
         compile(ast.declarations[i].init, result);
         result.push(';\n');
       }
-    } else if (ast.type == "ExpressionStatement") {
-      
+    } else if (ast.type == "AssignmentExpression") {
+      compile(ast.left, result);
+      result.push(' ');
+      result.push(ast.operator);
+      result.push(' ');
+      compile(ast.right, result);
+      result.push(';\n');
     } else {
       throw "NotImplemented " + ast.type;
     }
@@ -44,4 +50,4 @@ function compile(ast, result) {
 
 result = []
 compile(ast.body, result)
-console.log(result);
+console.log(result.join(''));
