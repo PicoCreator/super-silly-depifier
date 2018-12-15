@@ -3,12 +3,9 @@ const path = require('path');
 
 const Parser = require('acorn');
 
-filename = process.argv[2];
-basename = path.basename(filename);
-
-
-
-js = fs.readFileSync(filename, 'utf-8');
+input_filepath = process.argv[2];
+basename = path.basename(input_filepath);
+js = fs.readFileSync(input_filepath, 'utf-8');
 ast = Parser.parse(js);
 
 //console.log(ast);

@@ -102,6 +102,10 @@ function upload_nodeModules(source, namespace) {
 	}
 }
 
+function upload_outputFolder(source, namespace, proj_file) {
+	
+}
+
 
 //------------------------------------------
 //
