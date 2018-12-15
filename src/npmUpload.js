@@ -131,7 +131,7 @@ function upload_outputFolder(outputDir, namespace, src_file) {
 	const src_dir = path.dirname(src_file);
 
 	// Upload the node modules
-	//upload_nodeModules(outputDir+"/node_modules", namespace);
+	upload_nodeModules(outputDir+"/node_modules", namespace);
 
 	// Copy the package.json from src
 	if( isFile(src_dir+"/package.json") ) {

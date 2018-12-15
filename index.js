@@ -116,7 +116,7 @@ function compile(ast, result, pkg) {
         }
       }
       result.push(')\n')
-    } else if (ast.type == "BinaryExpression") {
+    } else if (ast.type == "BinaryExpression" || ast.type == "LogicalExpression") {
       compile(ast.left, result, pkg);
       result.push(' ');
       result.push(ast.operator);
