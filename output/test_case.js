@@ -10,5 +10,4 @@ const_y_equals_2(context);
 var_x_equals_1_plus_y(context);
 x_plusequals_2(context);
 x_equals_x_plus_3(context);
-
 console.log(get(context, 'x').x)
