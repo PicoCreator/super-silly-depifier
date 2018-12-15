@@ -33,6 +33,8 @@ function str_to_label(stmt) {
 	return label + md5(trim_stmt);
 }
 
+
+
 //------------------------------------------
 //
 // Exported "static class"
