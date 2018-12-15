@@ -1,14 +1,15 @@
 const fs = require('fs');
+const path = require('path');
+
 const Parser = require('acorn');
 
 filename = process.argv[2];
+basename = path.basename(filename);
 
 js = fs.readFileSync(filename, 'utf-8');
 ast = Parser.parse(js);
 
 //console.log(ast);
-
-
 
 function stmtTolabel(ast, stmt) {
   const label = stmt.join('')
@@ -22,11 +23,18 @@ function stmtTolabel(ast, stmt) {
     .replace(new RegExp('/', 'g'), 'divide')
     .replace(new RegExp('%', 'g'), 'percent')
     .replace(new RegExp(',', 'g'), 'comma');
-  modules[label] = '';
+  const pkg = []
+  compile(ast, pkg, true);
+  console.log("PKG: " + pkg);
+  modules[label] = pkg;
   return label
 }
 
-function compile(ast, result) {
+function compile(ast, result, pkg) {
+  if (pkg == "undefined") {
+    pkg = false;
+  }
+  
   if (Array.isArray(ast)) {
     for (let i=0; i<ast.length; i++) {
       compile(ast[i], result);
@@ -40,8 +48,13 @@ function compile(ast, result) {
       const stmt = []
       compile(ast.expression, stmt);
       stmt.push(';\n');
-      label = stmtTolabel(ast, stmt)
-      result.push(label + '(context);\n')
+      
+      if (pkg) {
+        result.push(stmt.join(''));
+      } else {
+        label = stmtTolabel(ast, stmt);
+        result.push(label + '(context);\n');
+      }
     } else if (ast.type == "BinaryExpression") {
       compile(ast.left, result);
       result.push(' ');
@@ -57,9 +70,14 @@ function compile(ast, result) {
         stmt.push(' = ');
         compile(ast.declarations[i].init, stmt);
         stmt.push(';\n');
-        label = stmtTolabel(ast, stmt);
-        console.log('Found:' + label);
-        result.push(label + '(context);\n')
+        
+        if (pkg) {
+          result.push(stmt.join(''));
+        } else {
+          label = stmtTolabel(ast, stmt);
+          console.log('Found:' + label);
+          result.push(label + '(context);\n')
+        }
       }
     } else if (ast.type == "AssignmentExpression") {
       compile(ast.left, result);
@@ -87,7 +105,38 @@ header.push('\n')
 result = header.concat(result);
 
 console.log(result.join(''));
+if (!fs.existsSync('output')) {
+  fs.mkdirSync('output');
+}
+fs.writeFileSync("output/"+basename, result.join(''));
 
-if (!fs.statSync('output')) {
-  fs.mkdirSync('output')
+if (!fs.existsSync('output/node_modules')) {
+  fs.mkdirSync('output/node_modules');
+}
+
+const getString = [
+  "module.exports = function(context, variable) {\n",
+  "    for (var i=0; i<context.length; i++) {\n",
+  "        if (context[i].hasOwnProperty(variable)) {\n",
+  "            return context[i];\n",
+  "        }\n",
+  "    }\n",
+  "    return context[0];\n",
+  "}\n"
+]
+
+if (!fs.existsSync('output/node_modules/get/')) {
+  fs.mkdirSync('output/node_modules/get/');
+}
+console.log("WRITING: output/node_modules/get/index.js");
+fs.writeFileSync("output/node_modules/get/index.js", getString.join(''));
+
+
+for (i in modules) {
+  if (!fs.existsSync('output/node_modules/' + i)) {
+    fs.mkdirSync('output/node_modules/' + i );
+  }
+  
+  console.log("WRITING: output/node_modules/" + i + "/index.js");
+  fs.writeFileSync("output/node_modules/" + i + "/index.js", modules[i].join(''));
 }
