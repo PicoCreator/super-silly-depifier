@@ -1,3 +1,9 @@
+/**
+ * Static Class: astUtil
+ * 
+ * Utility library to process ast code and objects
+ */
+
 //------------------------------------------
 //
 // Dependencies

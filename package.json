@@ -18,7 +18,8 @@
   "homepage": "https://github.com/PicoCreator/super-silly-depifier#readme",
   "dependencies": {
     "acorn": "^6.0.4",
-    "commander": "^2.19.0"
+    "commander": "^2.19.0",
+    "md5": "^2.2.1"
   },
   "devDependencies": {
     "mocha": "^5.2.0"
