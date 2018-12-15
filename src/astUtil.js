@@ -95,73 +95,92 @@ function ast_to_jsStrArr(ast, resArr) {
   * @param {*} result to populate and fill up
   */
 function crazy_ast_shit(ast, compileContext, result) {
-	if (pkg == "undefined") {
-	  pkg = false;
+	if (compileContext.isPkg == "undefined") {
+	  compileContext.isPkg = false;
 	}
 	
 	if (Array.isArray(ast)) {
 	  for (let i=0; i<ast.length; i++) {
-		 compile(ast[i], result, pkg);
+		 compile(ast[i], result, compileContext.isPkg);
 	  }
 	  return result;
 	} 
 
 	if (ast.type == "Literal") {
 		result.push(ast.raw);
-	} else if (ast.type == "Identifier") {
-		if (pkg) {
-		result.push("get(context, '"+ast.name+"')."+ast.name+"");
+	 } else if (ast.type == "Identifier") {
+		if (compileContext.isPkg) {
+		  result.push("get(context, '"+ast.name+"')."+ast.name+"");
 		} else {
-		result.push(ast.name);
+		  result.push(ast.name);
 		}
-	} else if (ast.type == "ExpressionStatement") {
+	 } else if (ast.type == "ExpressionStatement") {
+		if (ast.expression.type == "CallExpression") {
+		  const funcName = compileContext.oriJs.slice(ast.expression.callee.start, ast.expression.callee.end);
+		  
+		  if (funcName == 'console.log') {
+			 result.push(funcName + '(');
+			 for (let i=0; i<ast.expression.arguments.length; i++) {
+				compile(ast.expression.arguments[i], result, true);
+				if (i != ast.expression.arguments.length - 1) {
+				  result.push(',');
+				}
+			 }
+			 result.push(')');
+		  }
+		  return;
+		}
+		
 		const stmt = []
-		compile(ast.expression, stmt, pkg);
+		compile(ast.expression, stmt, compileContext.isPkg);
 		stmt.push(';\n');
 		
-		if (pkg) {
-		result.push(stmt.join(''));
+		if (compileContext.isPkg) {
+		  result.push(stmt.join(''));
 		} else {
-		label = stmtTolabel(ast, stmt);
-		result.push(label + '(context);\n');
+		  label = stmtTolabel(ast, stmt);
+		  result.push(label + '(context);\n');
 		}
-	} else if (ast.type == "BinaryExpression") {
-		compile(ast.left, result, pkg);
+	 } else if (ast.type == "BinaryExpression") {
+		compile(ast.left, result, compileContext.isPkg);
 		result.push(' ');
 		result.push(ast.operator);
 		result.push(' ');
-		compile(ast.right, result, pkg);
-	} else if (ast.type == "VariableDeclaration") {
+		compile(ast.right, result, compileContext.isPkg);
+	 } else if (ast.type == "VariableDeclaration") {
 		for (let i=0; i<ast.declarations.length; i++) {
-		if (pkg) {
-			const stmt = []
-			result.push("get(context, '"+ast.declarations[i].id.name+"')."+ast.declarations[i].id.name+"");
-			stmt.push(' = ');
-			compile(ast.declarations[i].init, stmt, pkg);
-			stmt.push(';\n');
-			result.push(stmt.join(''));
-		} else {
-			const stmt = []
-			stmt.push(ast.kind);
-			stmt.push(' ');
-			stmt.push(ast.declarations[i].id.name)
-			stmt.push(' = ');
-			compile(ast.declarations[i].init, stmt, pkg);
-			stmt.push(';\n');
-			label = stmtTolabel(ast, stmt);
-			console.log('Found:' + label);
-			result.push(label + '(context);\n')
+		  if (compileContext.isPkg) {
+			 const stmt = []
+			 result.push("get(context, '"+ast.declarations[i].id.name+"')."+ast.declarations[i].id.name+"");
+			 stmt.push(' = ');
+			 compile(ast.declarations[i].init, stmt, compileContext.isPkg);
+			 stmt.push(';\n');
+			 result.push(stmt.join(''));
+		  } else {
+			 const stmt = []
+			 stmt.push(ast.kind);
+			 stmt.push(' ');
+			 stmt.push(ast.declarations[i].id.name)
+			 stmt.push(' = ');
+			 compile(ast.declarations[i].init, stmt, compileContext.isPkg);
+			 stmt.push(';\n');
+			 label = stmtTolabel(ast, stmt);
+			 console.log('Found:' + label);
+			 result.push(label + '(context);\n')
+		  }
 		}
-		}
-	} else if (ast.type == "AssignmentExpression") {
-		compile(ast.left, result, pkg);
+	 } else if (ast.type == "AssignmentExpression") {
+		compile(ast.left, result, compileContext.isPkg);
 		result.push(' ');
 		result.push(ast.operator);
 		result.push(' ');
-		compile(ast.right, result, pkg);
-	} else {
+		compile(ast.right, result, compileContext.isPkg);
+	 } else if (ast.type == "CallExpression") {
+		
+		// throw "NotImplemented " + ast.type;
+	 } else {
 		throw "NotImplemented " + ast.type;
-	}
+	 }
  }
 
 //------------------------------------------
