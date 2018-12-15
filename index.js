@@ -25,14 +25,20 @@ function stmtTolabel(ast, stmt) {
     .replace(new RegExp(',', 'g'), 'comma')
     .replace(new RegExp('\\.', 'g'), 'dot')
     .replace(new RegExp('\\(', 'g'), 'openbracket')
-    .replace(new RegExp('\\)', 'g'), 'closebracket');
+    .replace(new RegExp('\\)', 'g'), 'closebracket')
+    .replace(new RegExp('\\[', 'g'), 'opensqbracket')
+    .replace(new RegExp('\\]', 'g'), 'closesqbracket')
+    .replace(new RegExp('>', 'g'), 'greater')
+    .replace(new RegExp('<', 'g'), 'lesser')
+    .replace(new RegExp("'", 'g'), '_')
+    .replace(new RegExp('"', 'g'), '_');
   let pkgOutput = [];
   compile(ast, pkgOutput, true);
   pkgOutput = [
     "var get = require('get');\n",
     "\n",
     "module.exports = function(context) {\n",
-    pkgOutput.join(''),
+    "  return " + pkgOutput.join('') + ';\n',
     "}\n",
   ];
   
@@ -86,6 +92,16 @@ function compile(ast, result, pkg) {
         label = stmtTolabel(ast, stmt);
         result.push(label + '(context);\n');
       }
+    } else if (ast.type == "CallExpression") {
+      compile(ast.callee, result, pkg);
+      result.push('(')
+      for (let i=0; i<ast.arguments.length; i++) {
+        compile(ast.arguments[i], result, pkg);
+        if (i!=ast.arguments.length - 1) {
+          result.push(',');
+        }
+      }
+      result.push(')\n')
     } else if (ast.type == "BinaryExpression") {
       compile(ast.left, result, pkg);
       result.push(' ');
@@ -114,16 +130,129 @@ function compile(ast, result, pkg) {
           result.push(label + '(context);\n')
         }
       }
+    } else if (ast.type == "FunctionDeclaration") {
+      result.push("function ")
+      result.push(ast.id.name);
+      result.push("(");
+      for (let i=0; i<ast.params.length; i++) {
+        result.push(ast.params[i].name)
+        if (i!=ast.params.length-1) {
+          result.push(',')
+        }
+      }
+      result.push(") ");
+      
+      result.push('{\n');
+      result.push("context.unshift({})\n");
+      for (let i=0; i<ast.params.length; i++) {
+        result.push("get(context, '"+ast.params[i].name+"')."+ast.params[i].name+" = "+ast.params[i].name+";\n");
+      }
+      result.push("retval = undefined\n\n");
+      
+      
+      compile(ast.body.body, result, pkg);
+      result.push('\n}\n');
+      
+      result.push("get(context, '"+ast.id.name+"')."+ast.id.name+" = "+ast.id.name+";");
+      
+    } else if (ast.type == "ReturnStatement") {
+      result.push('retval = ');
+      
+      const stmt = [];
+      compile(ast.argument, stmt, pkg);
+      label = stmtTolabel(ast.argument, stmt);
+      console.log('Found:' + label);
+      result.push(label + '(context);\n')
+      
+      result.push("context.shift();\n");
+      result.push("return retval;\n");
     } else if (ast.type == "AssignmentExpression") {
       compile(ast.left, result, pkg);
       result.push(' ');
       result.push(ast.operator);
       result.push(' ');
       compile(ast.right, result, pkg);
-    } else if (ast.type == "CallExpression") {
+    } else if (ast.type == "IfStatement") {
+      result.push('if (');
       
-      // throw "NotImplemented " + ast.type;
+      const stmt = [];
+      compile(ast.test, stmt, pkg);
+      label = stmtTolabel(ast.test, stmt);
+      console.log('Found:' + label);
+      result.push(label + '(context)')
+      
+      result.push(')\n')
+      compile(ast.consequent, result, pkg);
+    } else if (ast.type == "WhileStatement") {
+      result.push('while (');
+      
+      const stmt = [];
+      compile(ast.test, stmt, pkg);
+      label = stmtTolabel(ast.test, stmt);
+      console.log('Found:' + label);
+      result.push(label + '(context)')
+      
+      result.push(')\n')
+      compile(ast.body, result, pkg);
+    } else if (ast.type == "ForStatement") {
+      result.push('for (');
+      
+      let stmt = [];
+      compile(ast.init, stmt, pkg);
+      label = stmtTolabel(ast.init, stmt);
+      console.log('Found:' + label);
+      result.push(label + '(context);')
+      
+      stmt = [];
+      compile(ast.test, stmt, pkg);
+      label = stmtTolabel(ast.test, stmt);
+      console.log('Found:' + label);
+      result.push(label + '(context);')
+      
+      stmt = [];
+      compile(ast.update, stmt, pkg);
+      label = stmtTolabel(ast.update, stmt);
+      console.log('Found:' + label);
+      result.push(label + '(context))')
+      compile(ast.body, result, pkg);
+    } else if (ast.type == "BlockStatement") {
+      result.push('{\n');
+      compile(ast.body, result, pkg);
+      result.push('\n}\n');
+    } else if (ast.type == "UpdateExpression") {
+      if (ast.prefix) {
+        result.push(ast.operator);
+        compile(ast.argument, result, pkg);
+      } else {
+        compile(ast.argument, result, pkg);
+        result.push(ast.operator);
+      }
+    } else if (ast.type == "MemberExpression") {
+      if (ast.object.name == "process") {
+        result.push('process[')
+        compile(ast.property, result, pkg);
+        result.push(']')
+        return
+      } else {
+        compile(ast.object, result, pkg);
+        result.push('[')
+        compile(ast.property, result, pkg);
+        result.push(']')
+        return
+      }
+    } else if (ast.type == "NewExpression") {
+      result.push('new ')
+      result.push(ast.callee.name)
+      result.push('(')
+      for (let i=0; i<ast.arguments.length; i++) {
+        compile(ast.arguments[i], result, true);
+        if (i != ast.arguments.length - 1) {
+          result.push(',');
+        }
+      }
+      result.push(')')
     } else {
+      console.dir(ast);
       throw "NotImplemented " + ast.type;
     }
   }
