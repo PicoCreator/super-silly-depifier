@@ -23,10 +23,18 @@ function stmtTolabel(ast, stmt) {
     .replace(new RegExp('/', 'g'), 'divide')
     .replace(new RegExp('%', 'g'), 'percent')
     .replace(new RegExp(',', 'g'), 'comma');
-  const pkg = []
-  compile(ast, pkg, true);
-  console.log("PKG: " + pkg);
-  modules[label] = pkg;
+  let pkgOutput = [];
+  compile(ast, pkgOutput, true);
+  pkgOutput = [
+    "var get = require('get');\n",
+    "\n",
+    "module.exports = function(context) {\n",
+    pkgOutput.join(''),
+    "}\n",
+  ];
+  
+  console.log("PKG: " + pkgOutput.join(''));
+  modules[label] = pkgOutput;
   return label
 }
 
@@ -37,16 +45,20 @@ function compile(ast, result, pkg) {
   
   if (Array.isArray(ast)) {
     for (let i=0; i<ast.length; i++) {
-      compile(ast[i], result);
+      compile(ast[i], result, pkg);
     }
   } else {
     if (ast.type == "Literal") {
       result.push(ast.raw);
     } else if (ast.type == "Identifier") {
-      result.push(ast.name);
+      if (pkg) {
+        result.push("get(context, '"+ast.name+"')."+ast.name+"");
+      } else {
+        result.push(ast.name);
+      }
     } else if (ast.type == "ExpressionStatement") {
       const stmt = []
-      compile(ast.expression, stmt);
+      compile(ast.expression, stmt, pkg);
       stmt.push(';\n');
       
       if (pkg) {
@@ -56,52 +68,58 @@ function compile(ast, result, pkg) {
         result.push(label + '(context);\n');
       }
     } else if (ast.type == "BinaryExpression") {
-      compile(ast.left, result);
+      compile(ast.left, result, pkg);
       result.push(' ');
       result.push(ast.operator);
       result.push(' ');
-      compile(ast.right, result);
+      compile(ast.right, result, pkg);
     } else if (ast.type == "VariableDeclaration") {
       for (let i=0; i<ast.declarations.length; i++) {
-        const stmt = []
-        stmt.push(ast.kind);
-        stmt.push(' ');
-        stmt.push(ast.declarations[i].id.name)
-        stmt.push(' = ');
-        compile(ast.declarations[i].init, stmt);
-        stmt.push(';\n');
-        
         if (pkg) {
+          const stmt = []
+          result.push("get(context, '"+ast.declarations[i].id.name+"')."+ast.declarations[i].id.name+"");
+          stmt.push(' = ');
+          compile(ast.declarations[i].init, stmt, pkg);
+          stmt.push(';\n');
           result.push(stmt.join(''));
         } else {
+          const stmt = []
+          stmt.push(ast.kind);
+          stmt.push(' ');
+          stmt.push(ast.declarations[i].id.name)
+          stmt.push(' = ');
+          compile(ast.declarations[i].init, stmt, pkg);
+          stmt.push(';\n');
           label = stmtTolabel(ast, stmt);
           console.log('Found:' + label);
           result.push(label + '(context);\n')
         }
       }
     } else if (ast.type == "AssignmentExpression") {
-      compile(ast.left, result);
+      compile(ast.left, result, pkg);
       result.push(' ');
       result.push(ast.operator);
       result.push(' ');
-      compile(ast.right, result);
+      compile(ast.right, result, pkg);
     } else {
       throw "NotImplemented " + ast.type;
     }
   }
 }
 
-let result = []
-const modules = {}
+let result = [];
+const modules = {};
 
 compile(ast.body, result);
 
 const header = [];
 header.push("const get = require('get');\n");
 for (i in modules) {
-  header.push("const " + i + " = require('" + i + "');\n")
+  header.push("const " + i + " = require('" + i + "');\n");
 }
-header.push('\n')
+header.push('\n');
+header.push('const context = [{}];\n');
+header.push('\n');
 result = header.concat(result);
 
 console.log(result.join(''));
