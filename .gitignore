@@ -1,8 +1,9 @@
 # Preventing nodejs dependencies from being committed
 /node_modules
 
-# Preventing mocha-tmp folder from being committed
+# Preventing mocha-tmp and output folder from being committed
 /mocha-tmp
+/output
 
 # hidden files stuff
 .*
