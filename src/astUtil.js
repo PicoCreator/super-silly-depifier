@@ -1,3 +1,35 @@
+//------------------------------------------
+//
+// Dependencies
+//
+//------------------------------------------
+const Parser = require('acorn');
+
+//------------------------------------------
+//
+// Function implementation
+//
+//------------------------------------------
+
+/**
+ * Takes in a js string, and convert it to AST
+ * 
+ * @param {*} jsStr to parse to ast
+ * 
+ * @return ast object / ast array
+ */
+function jsStr_to_ast(jsStr) {
+	return Parser.parse(jsStr);
+}
+
+/**
+ * Takes in an AST object, and convert it to JS string array
+ * 
+ * @param {*} ast object or array (of ast objects) to process
+ * @param {*} resArr [Optional] to populate and fill up, initializes as an [] if null
+ * 
+ * @return resArr converted from the ast
+ */
 function ast_to_jsStrArr(ast, resArr) {
 	// Optional resArr setup
 	if( resArr == null ) {
@@ -49,9 +81,12 @@ function ast_to_jsStrArr(ast, resArr) {
 	return resArr;
 }
 
-/**
- * "Static" class to return
- */
+//------------------------------------------
+//
+// Exported "static class"
+//
+//------------------------------------------
 module.exports = {
-	ast_to_jsStrArr: ast_to_jsStrArr
+	ast_to_jsStrArr: ast_to_jsStrArr,
+	jsStr_to_ast: jsStr_to_ast
 };
