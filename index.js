@@ -327,14 +327,17 @@ for (i in modules) {
 
 
 // UPLOADING SHIT
-if( process.argv[3] == "true" ) {
+if( process.argv[3] != null ) {
+  let namespace = process.argv[3];
+
   console.log("==============================================");
   console.log("= UPLOADING MODE ENABLED - time to push this!");
+  console.log("= using namespace : "+namespace);
   console.log("= you got 0 seconds to terminate this option");
   console.log("==============================================");
 
   const npmUpload = require("./src/npmUpload.js");
   setTimeout(function() {
-    npmUpload.upload_nodeModules("output/node_modules/");
+    npmUpload.upload_nodeModules("output/node_modules/", namespace);
   }, 0);
 }
