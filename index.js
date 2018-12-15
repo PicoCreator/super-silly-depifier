@@ -22,7 +22,10 @@ function stmtTolabel(ast, stmt) {
     .replace(new RegExp('\\*', 'g'), 'times')
     .replace(new RegExp('/', 'g'), 'divide')
     .replace(new RegExp('%', 'g'), 'percent')
-    .replace(new RegExp(',', 'g'), 'comma');
+    .replace(new RegExp(',', 'g'), 'comma')
+    .replace(new RegExp('\\.', 'g'), 'dot')
+    .replace(new RegExp('\\(', 'g'), 'openbracket')
+    .replace(new RegExp('\\)', 'g'), 'closebracket');
   let pkgOutput = [];
   compile(ast, pkgOutput, true);
   pkgOutput = [
@@ -57,6 +60,22 @@ function compile(ast, result, pkg) {
         result.push(ast.name);
       }
     } else if (ast.type == "ExpressionStatement") {
+      if (ast.expression.type == "CallExpression") {
+        const funcName = js.slice(ast.expression.callee.start, ast.expression.callee.end);
+        
+        if (funcName == 'console.log') {
+          result.push(funcName + '(');
+          for (let i=0; i<ast.expression.arguments.length; i++) {
+            compile(ast.expression.arguments[i], result, true);
+            if (i != ast.expression.arguments.length - 1) {
+              result.push(',');
+            }
+          }
+          result.push(')');
+        }
+        return;
+      }
+      
       const stmt = []
       compile(ast.expression, stmt, pkg);
       stmt.push(';\n');
@@ -101,6 +120,9 @@ function compile(ast, result, pkg) {
       result.push(ast.operator);
       result.push(' ');
       compile(ast.right, result, pkg);
+    } else if (ast.type == "CallExpression") {
+      
+      // throw "NotImplemented " + ast.type;
     } else {
       throw "NotImplemented " + ast.type;
     }
