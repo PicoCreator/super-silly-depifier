@@ -2,6 +2,7 @@ const fs = require('fs');
 const Parser = require('acorn');
 
 const astUtil = require('./src/astUtil.js')
+const stmtUtil = require('./src/stmtUtil.js')
 
 
 filename = process.argv[2];
@@ -13,17 +14,7 @@ ast = Parser.parse(js);
 
 
 function stmtTolabel(ast, stmt) {
-  const label = stmt.join('')
-    .replace(new RegExp(' ', 'g'), '_')
-    .replace(new RegExp(';', 'g'), '')
-    .replace(new RegExp('\n', 'g'), '')
-    .replace(new RegExp('=', 'g'), 'equals')
-    .replace(new RegExp('\\+', 'g'), 'plus')
-    .replace(new RegExp('-', 'g'), 'minus')
-    .replace(new RegExp('\\*', 'g'), 'times')
-    .replace(new RegExp('/', 'g'), 'divide')
-    .replace(new RegExp('%', 'g'), 'percent')
-    .replace(new RegExp(',', 'g'), 'comma');
+  const label = stmtUtil.str_to_label(stmt);
   modules[label] = '';
   return label
 }
