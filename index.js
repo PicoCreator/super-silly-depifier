@@ -132,7 +132,9 @@ function compile(ast, result, pkg) {
           console.log('LOOK HERE: "' + ast.declarations[i].init.callee.name + '"');
           if (ast.declarations[i].init.callee.name == 'require') {
             console.log('FOUND REQUIRE: ' + js.slice(ast.declarations[i].start, ast.declarations[i].end));
-            result.push(js.slice(ast.declarations[i].start, ast.declarations[i].end))
+            result.push("get(context, '"+ast.declarations[i].id.name+"')."+ast.declarations[i].id.name+"");
+            result.push(' = ');
+            result.push(js.slice(ast.declarations[i].init.start, ast.declarations[i].init.end))
             result.push(';\n');
             return;
           }
@@ -261,7 +263,7 @@ function compile(ast, result, pkg) {
       result.push('for (');
       result.push(ast.left.name);
       result.push(' in ');
-      compile(ast.right, result, pkg);
+      result.push("get(context, '"+ast.right.name+"')."+ast.right.name);
       result.push(')');
       result.push('{\n');
       result.push("get(context, '"+ast.left.name+"')."+ast.left.name+" = "+ast.left.name+";\n");
@@ -288,16 +290,22 @@ function compile(ast, result, pkg) {
           return
         } else {
           result.push('process.')
-          
-          compile(ast.property, result, pkg);
+          result.push(ast.property.name)
+          return;
         }
-        
       } else {
-        compile(ast.object, result, pkg);
-        result.push('[')
-        compile(ast.property, result, pkg);
-        result.push(']')
-        return
+        if (ast.computed) {
+          compile(ast.object, result, pkg);
+          result.push('[')
+          compile(ast.property, result, pkg);
+          result.push(']')
+          return;
+        } else {
+          compile(ast.object, result, pkg);
+          result.push('.')
+          result.push(ast.property.name)
+          return;
+        }
       }
     } else if (ast.type == "NewExpression") {
       result.push('new ')
