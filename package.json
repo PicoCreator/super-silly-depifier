@@ -1,0 +1,32 @@
+{
+	"name": "depifier",
+	"version": "1.0.0",
+	"description": "Rewrite any node.js projecct into a collection of nano-packages, and upload it back to NPM",
+	"main": "index.js",
+	"scripts": {
+		"test": "mocha"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/depifier/depifier.js.git"
+	},
+	"author": "Fazli Sapuan @fuzzie360",
+	"contributors": [
+		"Eugene Cheah @PicoCreator"
+	],
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/depifier/depifier.js/issues"
+	},
+	"homepage": "https://github.com/depifier/depifier.js#readme",
+	"dependencies": {
+		"acorn": "^6.0.4",
+		"acorn-walk": "^6.1.1",
+		"commander": "^2.19.0",
+		"fs-extra": "^7.0.1",
+		"md5": "^2.2.1"
+	},
+	"devDependencies": {
+		"mocha": "^5.2.0"
+	}
+}
