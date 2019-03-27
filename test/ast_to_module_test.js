@@ -74,9 +74,9 @@ describe('ast to module test', () => {
 	describe('UpdateExpression conversion', () => {
 
 		//
-		// Basic X++
+		// Basic x++
 		//
-		it("Basic X++", () => {
+		it("Basic x++", () => {
 			// modCache to use and validate
 			let modCache = {}
 

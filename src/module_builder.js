@@ -119,7 +119,7 @@ function fromUpdateExpression(ast, modCache) {
  * @param {acorn ast object} ast node object to walk through
  * @param {module cache} modCache to store completed module code
  * 
- * @return JS usage string
+ * @return JS usage string array
  */
 function fromBinaryExpression(ast, modCache) {
 	// Type safety
