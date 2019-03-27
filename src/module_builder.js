@@ -42,7 +42,7 @@ function fromIdentifier(ast, modCache) {
  * 
  * @return JS usage string array
  */
-function fromLiteralDefinition(ast, modCache) {
+function fromLiteral(ast, modCache) {
 	// Type safety
 	if( ast == null || ast.type != 'Literal' ) {
 		throw "Invalid Literal ast : "+JSON.stringify(ast);
@@ -79,6 +79,32 @@ function fromLiteralDefinition(ast, modCache) {
 
 	// And return the JS representation
 	return [`require("${moduleName}")`];
+}
+
+/**
+ * Given a "UpdateExpression" AST definition, return as it is.
+ * (used to build up more complex modules)
+ * 
+ * Examples of UpdateExpression
+ * 
+ * + `x++`
+ * + `--x`
+ * 
+ * @param {acorn ast object} ast node object to walk through
+ * @param {module cache} modCache to store completed module code
+ * 
+ * @return JS usage string array
+ */
+function fromUpdateExpression(ast, modCache) {
+	// Type safety
+	if( ast == null || ast.type != 'UpdateExpression' ) {
+		throw "Invalid UpdateExpression ast : "+JSON.stringify(ast);
+	}
+	if( ast.prefix == true ) {
+		return [ ast.operator, fromAstDefinition(ast.argument, modCache) ];
+	} else {
+		return [ fromAstDefinition(ast.argument, modCache), ast.operator ];
+	}
 }
 
 /**
@@ -162,7 +188,12 @@ function fromAstDefinition(ast, modCache) {
 
 		// Lets make a "Literal" module
 		Literal(node, st, c) {
-			ret = fromLiteralDefinition(node, modCache);
+			ret = fromLiteral(node, modCache);
+		},
+
+		// "UpdateExpression" support
+		UpdateExpression(node, st, c) {
+			ret = fromUpdateExpression(node, modCache);
 		},
 
 		// "BinaryExpression" support
