@@ -14,9 +14,9 @@ describe('ast to module test', () => {
 		//
 		// Test int parsing and conversion
 		//
-		it("Int conversion", () => {
+		it("Literal Int", () => {
 			// modCache to use and validate
-			let modCache = {};
+			let modCache = {}
 
 			// Lets acron pass a literal
 			let node = acorn.parse("1")
@@ -26,7 +26,7 @@ describe('ast to module test', () => {
 			assert.ok(literalNode)
 
 			// Lets process the definition
-			let ret = module_builder.fromNanoDefinition(literalNode, modCache)
+			let ret = module_builder.fromAstDefinition(literalNode, modCache).join("")
 
 			// Validate the result
 			assert.equal(ret, "require(\"LiteralInt_1\")")
@@ -39,16 +39,33 @@ describe('ast to module test', () => {
 		//
 	});
 
+	//
+	// Binary Expression
+	//
+	describe('Binary Expression conversion', () => {
+
+		//
+		// Basic X+Y
+		//
+		it("Binary addition", () => {
+			// modCache to use and validate
+			let modCache = {}
+
+			// Lets acron pass a binary example
+			let node = acorn.parse("x+5")
+			assert.ok(node)
+			// And ge the binary expression
+			let binaryNode = node.body[0].expression;
+			assert.ok(binaryNode);
+
+			// Lets process the definition
+			let ret = module_builder.fromAstDefinition(binaryNode, modCache).join("")
+
+			// Validate the result
+			assert.equal(ret, "require(\"x_plus_y\")(x,require(\"LiteralInt_5\"))")
+			assert.equal(modCache["x_plus_y"], "module.exports = function(x,y) { return x+y }")
+		});
+		
+	});
+
 });
-
-
-
-			// console.log("------------------")
-			// let ast = acorn.parse("let x = x+1");
-			// console.log(ast);
-			// console.log("------------------")
-			// let astDeclare = ast.body[0].declarations[0];
-			// console.log(astDeclare);
-			// console.log("------------------")
-			// console.log( module_builder.fromNanoDefinition( astDeclare.init.right ) );
-			// assert.ok(ast);
